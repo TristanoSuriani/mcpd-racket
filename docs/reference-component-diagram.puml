@@ -1,6 +1,6 @@
 @startuml
 
-title Modules - Component Diagram
+title Modules
 
 [Main] as main
 [Parser] as parser
@@ -15,6 +15,7 @@ main --> parser
 ui --> model
 ui --> registry
 ui --> interpreter
+interpreter -> model
 parser --> model
 parser --> rules
 
