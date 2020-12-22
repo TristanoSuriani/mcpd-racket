@@ -3,10 +3,10 @@
 ;; Now unit tests!
 
 (require rackunit)
-(require "user-interface.rkt")
-(require "parser.rkt")
+(require "../src/user-interface.rkt")
+(require "../src/parser.rkt")
 
-(define test-model (parse-mcpd-file "rules.mcpd"))
+(define test-model (parse-mcpd-file "../src/rules.mcpd"))
 
 (test-case "An unregistered cat can leave but not enter"
            (define registry '())
