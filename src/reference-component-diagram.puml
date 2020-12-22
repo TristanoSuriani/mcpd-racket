@@ -1,0 +1,21 @@
+@startuml
+
+title Modules - Component Diagram
+
+[Main] as main
+[Parser] as parser
+[Model] as model
+[Chips\nRegistry] as registry
+[<<rules.mcpd>>] as rules
+[User\nInterface] as ui
+[Interpreter] as interpreter
+
+main --> ui
+main --> parser
+ui --> model
+ui --> registry
+ui --> interpreter
+parser --> model
+parser --> rules
+
+@enduml

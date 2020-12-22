@@ -1,0 +1,17 @@
+[modes]
+fully open: can enter, can leave
+only enter: can enter, cannot leave
+only leave: cannot enter, can leave
+fully closed: cannot enter, cannot leave
+default: can enter, cannot leave
+
+
+[curfew]
+starts: 14
+ends: 6
+rules: can enter, cannot leave
+
+
+[rules]
+enter: when registered
+leave: always

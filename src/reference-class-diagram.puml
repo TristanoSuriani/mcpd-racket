@@ -1,0 +1,33 @@
+@startuml
+
+title Model
+
+class Model {
+    -List<Mode> modes
+    -Curfew curfew
+    -List<Mode> rules
+}
+
+class Mode {
+    -String name
+    -boolean can-enter
+    -boolean can-leave
+}
+
+class Curfew {
+    -int starts
+    -int ends
+    -boolean can-enter
+    -boolean can-leave
+}
+
+class Rule {
+    -String name
+    -Symbol condition
+}
+
+Model --> Mode
+Model --> Curfew
+Model --> Rule
+
+@enduml
