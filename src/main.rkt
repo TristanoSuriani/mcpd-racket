@@ -16,7 +16,6 @@
 
 (with the ASCII art because I'm a H4X0R)
 
-(
 |#
 
 ; Defines function to test the application in the REPL console.
