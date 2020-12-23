@@ -2,7 +2,15 @@
 
 ;;; Allows to read the rules file and create the model to be executed.
 
-(provide parse-mcpd-file)
+(provide
+
+ ; [function] Reads the source file and extracts its model
+ ; string -> model
+ parse-mcpd-file)
+
+
+; ------------------------
+; implementation
 
 (require "model.rkt")
 
@@ -21,6 +29,7 @@
     ;      we skip the empty lines and depending by de section, we create populate a mode or rule structure. 
     (for ([line (file->lines filename)])
       (cond
+        
         ([string=? line "[modes]"]
          (begin
            (set! modes-section #t)
@@ -88,10 +97,10 @@
               [can-enter (string=? "can enter" (first rules-pair))]
               [can-leave (string=? "can leave" (second rules-pair))])
          
-          (curfew (curfew-starts curfew-definition)
-                  (curfew-ends curfew-definition)
-                  can-enter
-                  can-leave))))))
+         (curfew (curfew-starts curfew-definition)
+                 (curfew-ends curfew-definition)
+                 can-enter
+                 can-leave))))))
             
 
 ; We are in the 'rules' section. Here we parse the rule line and populate a rule structure.

@@ -1,16 +1,24 @@
 #lang racket
 
 
-(provide make-user-interface)
+(provide new-user-interface ui-request)
 
 (require "model.rkt")
 (require "chips-registry.rkt")
 (require "interpreter.rkt")
 
+(define-syntax ui-request
+  (syntax-rules ()
+    [(ui-request (handler) operation with chip id-cat)
+     (handler 'operation #:id-cat id-cat)]
+
+    [(ui-request (handler) operation)
+     (handler 'operation)]))
+
 ;; Here we handle the owners's (register, unregister, reset, switch-mode) feline's requests (which are: enter, leave, and meow)
 
-(define (make-user-interface model)
-  (define registry '())
+(define (new-user-interface model)
+  (define registry (new-registry))
   (define current-mode "default")
   (define curfew-activated #f)
   (define modes-names (map (λ (mode) (mode-name mode)) (model-modes model)))
@@ -18,12 +26,7 @@
   (define (handle-can-do operation id-cat)
     (boolean-response->text-response (can-do? model operation id-cat registry current-mode curfew-activated)))
 
-  (define (handle operation . other-args)
-    (let
-        ([id-cat
-          (if (pair? other-args)
-              (first other-args)
-              '())])
+  (define (handle operation #:id-cat [id-cat '()])
       (cond
         ([eq? operation 'register]
          (set! registry (register-chip id-cat registry)))
@@ -32,7 +35,7 @@
          (set! registry (unregister-chip id-cat registry)))
         
         ([eq? operation 'reset]
-         (set! registry (factory-reset)))
+         (set! registry (new-registry)))
         
         ([eq? operation 'registered?]
          (registered? id-cat registry))
@@ -62,9 +65,7 @@
         ([eq? operation 'leave]
           (handle-can-do operation id-cat))
 
-        (else error (string-append "Unsupported operation " operation)))))
-
- 
+        (else error (string-append "Unsupported operation " operation))))
 
   handle)
 

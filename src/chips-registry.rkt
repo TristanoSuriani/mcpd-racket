@@ -3,7 +3,25 @@
 ;;; Defines the chip registry's operations.
 
 (provide
- new-registry register-chip unregister-chip factory-reset registered?)
+ ; [Function] Creates a new registry
+ ; -> empty list
+ new-registry
+
+ ; [Function] Registers a chip in the registry
+ ; number, list -> list
+ register-chip
+
+ ; [Function] Unregisters a chip in the registry
+ ; number, list -> list
+ unregister-chip
+
+ ; [Function] Checks if a chip is already registered in a registry
+ ; number, list -> boolean
+ registered?)
+
+
+; ------------------------
+; implementation
 
 (define (new-registry)
   '())
@@ -13,9 +31,6 @@
 
 (define (unregister-chip id-cat chips-registry)
   (remove id-cat chips-registry))
-
-(define (factory-reset)
-  (new-registry))
 
 (define (registered? id-cat chips-registry)
   (member? id-cat chips-registry))

@@ -1,14 +1,32 @@
 #lang racket
 
+;;; Provides an interface to answer questions based on model content and given parameters.
+
 (provide
+
+ ; [Function] Checks if an unregistered cat is authorized to perform the desired operation (enter, leave).
+ ;            An unregistered cat is a cat whose chip hasn't been registered in the registry.
+ ;
+ ; model, symbol -> boolean
  can-unregistered-cat-do?
+
+ ; [Function] Checks if a registered cat is authorized to perform the desired operation (enter, leave).
+ ;            A registered cat is a cat whose chip hasn't been registered in the registry.
+ ;
+ ; model, symbol -> boolean
  can-registered-cat-do?
+
+ ; [Function] Checks if the curfew is active. A curfew is a period of time where other rules are applied.
+ ; model, boolean -> boolean
  curfew-active?)
+
+
+; ------------------------
+; implementation
 
 (require "model.rkt")
 (require racket/date)
 
-; Here we define how the system responds to a cat whose chip hasn't been registered
 (define (can-unregistered-cat-do? model operation)
   (let*
       ([rules (model-rules model)]
@@ -22,7 +40,6 @@
       ([eq? 'leave operation] leave-rule-value)
       (else #f))))
 
-; Here we define how the system responds to a cat whose chip has been registered
 (define (can-registered-cat-do? model operation selected-mode curfew-activated)  
   (let*
       ([mode (model-mode-from-mode-name model selected-mode)]
@@ -45,7 +62,6 @@
       
       [else #f])))
 
-; Utility function to determine if the curfew is active
 (define (curfew-active? model curfew-activated)
   (let*
       ([curfew-definition (model-curfew model)]
