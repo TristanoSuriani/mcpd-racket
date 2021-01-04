@@ -1,6 +1,6 @@
 #lang racket
 
-
+;;; TODO add documentation
 (provide new-user-interface ui-request)
 
 (require "model.rkt")

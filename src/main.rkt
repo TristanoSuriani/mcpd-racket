@@ -20,7 +20,7 @@
 
 ; Defines function to test the application in the REPL console.
 (define ask
-  (make-user-interface
+  (new-user-interface
    (parse-mcpd-file "rules.mcpd")))
 
 (define-syntax-rule (with-chip id-cat operation)
