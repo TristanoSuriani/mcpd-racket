@@ -9,15 +9,15 @@
 
  ; [Function] Registers a chip in the registry
  ; number, list -> list
- register-chip
+ chip-register
 
  ; [Function] Unregisters a chip in the registry
  ; number, list -> list
- unregister-chip
+ chip-unregister
 
  ; [Function] Checks if a chip is already registered in a registry
  ; number, list -> boolean
- registered?)
+ chip-registered?)
 
 
 ; ------------------------
@@ -26,14 +26,14 @@
 (define (new-registry)
   '())
 
-(define (register-chip id-cat chips-registry)
-  (append chips-registry (list id-cat)))
+(define (chip-register cat-id chips-registry)
+  (append chips-registry (list cat-id)))
 
-(define (unregister-chip id-cat chips-registry)
-  (remove id-cat chips-registry))
+(define (chip-unregister cat-id chips-registry)
+  (remove cat-id chips-registry))
 
-(define (registered? id-cat chips-registry)
-  (member? id-cat chips-registry))
+(define (chip-registered? cat-id chips-registry)
+  (member? cat-id chips-registry))
 
 ; Utility function to know if an element belongs to a list
 (define (member? element lst)

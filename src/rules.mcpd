@@ -7,7 +7,7 @@ default: can enter, cannot leave
 
 
 [curfew]
-starts: 14
+starts: 22
 ends: 6
 rules: can enter, cannot leave
 
@@ -15,3 +15,5 @@ rules: can enter, cannot leave
 [rules]
 enter: when registered
 leave: always
+
+  

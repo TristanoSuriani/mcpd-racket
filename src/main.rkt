@@ -18,13 +18,4 @@
 
 |#
 
-; Defines function to test the application in the REPL console.
-(define ask
-  (new-user-interface
-   (parse-mcpd-file "rules.mcpd")))
-
-(define-syntax-rule (with-chip id-cat operation)
-  (ask 'operation id-cat))
-
-(define-syntax-rule (just-do operation)
-  (ask 'operation))
+((new-mcpd-session (parse-mcpd-file "rules.mcpd")))

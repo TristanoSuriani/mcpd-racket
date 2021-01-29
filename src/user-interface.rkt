@@ -1,81 +1,177 @@
 #lang racket
 
 ;;; TODO add documentation
-(provide new-user-interface ui-request)
+(provide new-mcpd-session)
 
 (require "model.rkt")
+(require "parser.rkt")
 (require "chips-registry.rkt")
-(require "interpreter.rkt")
+(require racket/date)
+(require racket/pretty)
 
-(define-syntax ui-request
-  (syntax-rules ()
-    [(ui-request (handler) operation with chip id-cat)
-     (handler 'operation #:id-cat id-cat)]
-
-    [(ui-request (handler) operation)
-     (handler 'operation)]))
-
-;; Here we handle the owners's (register, unregister, reset, switch-mode) feline's requests (which are: enter, leave, and meow)
-
-(define (new-user-interface model)
+(define (new-mcpd-session model)
   (define registry (new-registry))
-  (define current-mode "default")
+  (define modes-names (get-modes-names model))
+  (define active-mode (first modes-names))
   (define curfew-activated #f)
-  (define modes-names (map (λ (mode) (mode-name mode)) (model-modes model)))
+  (define can-unregistered-cat-enter (can-enter-unregistered? model))
+  (define can-unregistered-cat-leave (can-leave-unregistered? model))
+  (define can-registered-cat-enter (can-enter-registered? active-mode model))
+  (define can-registered-cat-leave (can-leave-registered? active-mode model))
+  (define can-cat-enter-during-curfew (can-enter-during-curfew? model))
+  (define can-cat-leave-during-curfew (can-leave-during-curfew? model))
 
-  (define (handle-can-do operation id-cat)
-    (boolean-response->text-response (can-do? model operation id-cat registry current-mode curfew-activated)))
+  (define (toggle-curfew!)
+    (set! curfew-activated (not curfew-activated)))
 
-  (define (handle operation #:id-cat [id-cat '()])
+  (define (prompt)
+    (begin
+      (displayln "Microchip Pet Door v0.0.1-pre-alpha by Tristano Suriani")
+      (infinite-loop
+       (λ ()
+         (begin
+           (display "@Microchip-Pet-Door> ")
+           (let*
+               ((text-input (read-line))
+                (input (if (eof-object? text-input)
+                           '()
+                           (string-split (string-trim text-input) " ")))
+                (command (if (>= (length input) 1)
+                             (string->symbol (first input))
+                             "nothing"))
+                (cat-id (if (>= (length input) 2)
+                            (second input)
+                            '())))
+            
+             (cond
+               ((eq? 'quit command) command)
+
+               ((eq? 'enter command)
+                (cond
+                  ((curfew? model curfew-activated)
+                   (displayln (boolean-response->text-response can-cat-enter-during-curfew)))
+                  ((and
+                    (not (null? cat-id))
+                    (chip-registered? cat-id registry))
+                   (displayln (boolean-response->text-response can-registered-cat-enter)))
+                  (else (displayln (boolean-response->text-response can-unregistered-cat-enter)))))
+
+               ((eq? 'leave command)
+                (cond
+                  ((curfew? model curfew-activated)
+                   (displayln (boolean-response->text-response can-cat-leave-during-curfew)))
+                  ((and
+                    (not (null? cat-id))
+                    (chip-registered? cat-id registry))
+                   (displayln (boolean-response->text-response can-registered-cat-leave)))
+                  (else (displayln (boolean-response->text-response can-unregistered-cat-leave)))))
+
+               ((eq? 'register command)
+                (modify-registry! chip-register cat-id))
+
+               ((eq? 'unregister command)
+                (modify-registry! chip-unregister cat-id))
+
+               ((eq? 'registered command)
+                (displayln (boolean-response->yes-no (chip-registered? cat-id registry))))
+                
+               ((eq? 'mode command) (displayln active-mode))
+                
+               ((eq? 'switch-mode command)
+                (begin
+                  (switch-mode!)
+                  (displayln active-mode)))
+
+               ((eq? 'toggle-curfew command)
+                (begin
+                  (toggle-curfew!)
+                  (print-done)))
+
+               ((eq? 'curfew command)
+                 (displayln (boolean-response->yes-no (curfew? model curfew-activated))))
+
+               ((eq? 'reset-registry command)
+                (set! registry (new-registry)))
+
+               ((eq? 'debug command) (print-state))
+                
+               (else
+                (displayln (string-append "Unknown command " (symbol->string command) "."))))))))))
+
+  (define (switch-mode!)
+    (set! modes-names (append (cdr modes-names) (list (car modes-names))))
+    (set! active-mode (first modes-names))
+    (set! can-registered-cat-enter (can-enter-registered? active-mode model))
+    (set! can-registered-cat-leave (can-leave-registered? active-mode model)))
+  
+  (define (modify-registry! fn cat-id)
+    (cond
+      ((null? cat-id)
+       (print-missing-cat-id))
+      (else
+       (begin
+         (set! registry (fn cat-id registry))
+         (print-done)))))      
+  
+  (define (infinite-loop fn)
+    (let
+        ((result (fn)))
       (cond
-        ([eq? operation 'register]
-         (set! registry (register-chip id-cat registry)))
-        
-        ([eq? operation 'unregister]
-         (set! registry (unregister-chip id-cat registry)))
-        
-        ([eq? operation 'reset]
-         (set! registry (new-registry)))
-        
-        ([eq? operation 'registered?]
-         (registered? id-cat registry))
-        
-        ([eq? operation 'switch-mode]
-         (let
-             ([first-mode (first modes-names)])
-           (begin
-             (set! modes-names (append (rest modes-names) (list first-mode)))
-             (set! current-mode (first modes-names))
-             current-mode)))
-        
-        ([eq? operation 'mode] current-mode)
-        
-        ([eq? operation 'toggle-curfew]
-         (set! curfew-activated (not curfew-activated)))
+        ((eq? result 'quit) "Bye.")
+        (else (infinite-loop fn)))))
 
-        ([eq? operation 'curfew-activated?]
-         curfew-activated)
+  (define (print-state)
+    (map (λ (var) (pretty-print var))
+         (list "model"
+               model
+               "registry"
+               registry
+               "modes-names"
+               modes-names
+               "active-mode"
+               active-mode
+               "curfew-activated"
+               curfew-activated
+               "can-unregistered-cat-enter"
+               can-unregistered-cat-enter
+               "can-unregistered-cat-leave"
+               can-unregistered-cat-leave
+               "can-registered-cat-enter"
+               can-registered-cat-enter
+               "can-registered-cat-leave"
+               can-registered-cat-leave
+               "can-cat-enter-during-curfew"
+               can-cat-enter-during-curfew
+               "can-cat-leave-during-curfew"
+               can-cat-leave-during-curfew)))
+  
+  prompt)
 
-        ([eq? operation 'curfew-active?]
-         (curfew-active? model curfew-activated))
-        
-        ([eq? operation 'enter]
-         (handle-can-do operation id-cat))
-        
-        ([eq? operation 'leave]
-          (handle-can-do operation id-cat))
+(define (curfew? model curfew-activated)
+  (let*
+      ([starts (model-curfew-starts model)]
+       [ends (model-curfew-ends model)]
+       [ends (if (> starts ends) (+ 24 ends) ends)]
+       [hour (date-hour (current-date))])
 
-        (else error (string-append "Unsupported operation " operation))))
+    (and
+     curfew-activated
+     (>= hour starts)
+     (<= hour ends))))
 
-  handle)
-
-(define (can-do? model operation id-cat chips-registry selected-mode curfew-activated)
-  (if (registered? id-cat chips-registry)
-      (can-registered-cat-do? model operation selected-mode curfew-activated)
-      (can-unregistered-cat-do? model operation)))
 
 (define (boolean-response->text-response boolean-response)
-    (if [eq? #t boolean-response]
-        "OK"
-        "PERMISSION DENIED"))
- 
+  (if [eq? #t boolean-response]
+      "Ok."
+      "Permisison denied."))
+
+(define (boolean-response->yes-no boolean-response)
+  (if (eq? boolean-response #t)
+      "Yes."
+      "No."))
+  
+(define (print-done)
+  (displayln "Done."))
+
+(define (print-missing-cat-id)
+  (displayln (string-append "Error: missing cat id")))
