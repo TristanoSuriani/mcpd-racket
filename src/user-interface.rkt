@@ -5,7 +5,7 @@
 
 (require "model.rkt")
 (require "parser.rkt")
-(require "chips-registry.rkt")
+(require "registry.rkt")
 (require racket/date)
 (require racket/pretty)
 
@@ -73,7 +73,11 @@
                 (modify-registry! chip-unregister cat-id))
 
                ((eq? 'registered command)
-                (displayln (boolean-response->yes-no (chip-registered? cat-id registry))))
+                (cond
+                  ((null? cat-id)
+                   (print-missing-cat-id))
+                  (else
+                   (displayln (boolean-response->yes-no (chip-registered? cat-id registry))))))
                 
                ((eq? 'mode command) (displayln active-mode))
                 
@@ -88,12 +92,17 @@
                   (print-done)))
 
                ((eq? 'curfew command)
-                 (displayln (boolean-response->yes-no (curfew? model curfew-activated))))
+                (displayln (boolean-response->yes-no (curfew? model curfew-activated))))
 
                ((eq? 'reset-registry command)
-                (set! registry (new-registry)))
+                (begin
+                  (set! registry (new-registry))
+                  (print-done)))
 
                ((eq? 'debug command) (print-state))
+
+               ((eq? 'help command)
+                (print-help))
                 
                (else
                 (displayln (string-append "Unknown command " (symbol->string command) "."))))))))))
@@ -119,6 +128,28 @@
       (cond
         ((eq? result 'quit) "Bye.")
         (else (infinite-loop fn)))))
+
+  (define (print-help)
+    (let
+        ((help '(("curfew" "Checks if the curfew is active" "curfew")
+                 ("enter" "Asks if the cat can enter" "enter [id]")
+                 ("leave" "Asks if the cat can leave" "leave [id]")
+                 ("help" "Prints the list of available commands" "help")
+                 ("mode" "Displays the active mode" "mode")
+                 ("register" "Adds a cat to the registry" "register [id]*")
+                 ("registered" "Checks if a cat is registered" "registered [id]*")
+                 ("reset-registry" "Resets the registry" "reset-registry")
+                 ("switch-mode" "Switches to the next mode" "switch-mode")
+                 ("toggle-curfew" "Activates/deactivates the special curfew mode" "toggle-curfew")
+                 ("unregister" "Removes a cat from the registry" "unregister [id]*"))))
+
+      (map (λ (var)
+             (let
+                 ((command (first var))
+                  (description (second var))
+                  (usage (third var)))
+               (displayln (string-append "- " command ": " description ".\n\tUsage:> " usage "\n"))))
+           help)))
 
   (define (print-state)
     (map (λ (var) (pretty-print var))

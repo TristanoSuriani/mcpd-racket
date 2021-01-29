@@ -4,7 +4,7 @@
 
 (provide
 
- ; [function] Reads the source file and extracts its model
+ ; (function) Reads the source file and extracts its model
  ; string -> model
  parse-mcpd-file)
 
@@ -21,13 +21,13 @@
 (define (split-file-in-sections filename)
 
   ; Some initialisation...
-  (let ([inside-modes-section #f]
-        [inside-curfew-section #f]
-        [inside-rules-section #f]
-        [modes-section ""]
-        [curfew-section ""]
-        [rules-section ""]
-        [model '()])
+  (let ((inside-modes-section #f)
+        (inside-curfew-section #f)
+        (inside-rules-section #f)
+        (modes-section "")
+        (curfew-section "")
+        (rules-section "")
+        (model '()))
 
     (define (set-inside-section! modes curfew rules)
       (set! inside-modes-section modes)
@@ -36,25 +36,25 @@
 
     ; Here we read every file of rules.file, we determine the current section (modes, rules),
     ;      we skip the empty lines and depending by de section, we create populate a mode or rule structure. 
-    (for ([line (file->lines filename)])
+    (for ((line (file->lines filename)))
       (cond
         
-        ([string=? line "[modes]"] (set-inside-section! #t #f #f))
+        ((string=? line "[modes]") (set-inside-section! #t #f #f))
 
-        ([string=? line "[curfew]"] (set-inside-section! #f #t #f))
+        ((string=? line "[curfew]") (set-inside-section! #f #t #f))
       
-        ([string=? line "[rules]"] (set-inside-section! #f #f #t))
+        ((string=? line "[rules]") (set-inside-section! #f #f #t))
 
-        ([string=? "" (string-trim line)]
+        ((string=? "" (string-trim line))
          #f)
       
-        ([eq? #t inside-modes-section]
+        ((eq? #t inside-modes-section)
          (set! modes-section (string-append modes-section line "\n")))
 
-        ([eq? #t inside-curfew-section]
+        ((eq? #t inside-curfew-section)
          (set! curfew-section (string-append curfew-section line "\n")))
 
-        ([eq? #t inside-rules-section]
+        ((eq? #t inside-rules-section)
          (set! rules-section (string-append rules-section line "\n")))
 
         (else (error (string-append "Not in a known section: " line)))))
@@ -72,7 +72,7 @@
 
 (define (parse-modes-section modes-section model)
   (define temporary-model model)
-  (for ([line modes-section])
+  (for ((line modes-section))
     (set! temporary-model (read-mode line temporary-model)))
   temporary-model)
 
@@ -81,17 +81,17 @@
   (define ends #f)
   (define can-enter #f)
   (define can-leave #f)
-  (for ([line curfew-section])
+  (for ((line curfew-section))
     (let
-        ([parsed-line (read-curfew line)])
+        ((parsed-line (read-curfew line)))
       (cond
-        ([eq? (first parsed-line) 'starts]
+        ((eq? (first parsed-line) 'starts)
          (set! starts (second parsed-line)))
 
-        ([eq? (first parsed-line) 'ends]
+        ((eq? (first parsed-line) 'ends)
          (set! ends (second parsed-line)))
 
-        ([eq? (first parsed-line) 'rules]
+        ((eq? (first parsed-line) 'rules)
          (set! can-enter (second parsed-line))
          (set! can-leave (third parsed-line))))))
 
@@ -100,57 +100,57 @@
 (define (parse-rules-section rules-section model)
   (define can-enter #f)
   (define can-leave #f)
-  (for ([line rules-section])
+  (for ((line rules-section))
     (let
-        ([parsed-line (read-rules line)])
+        ((parsed-line (read-rules line)))
 
       (cond
-        ([eq? (first parsed-line) 'can-enter]
+        ((eq? (first parsed-line) 'can-enter)
          (set! can-enter (second parsed-line)))
 
-        ([eq? (first parsed-line) 'can-leave]
+        ((eq? (first parsed-line) 'can-leave)
          (set! can-leave (second parsed-line))))))
   
   (add-rules-section can-enter can-leave model))
 
 
 (define (read-mode line model)
-  (let* ([mode-pair (split-and-trim line ":")]
-         [name (first mode-pair)]
-         [mode-rules (split-and-trim (second mode-pair) ",")]
-         [can-enter (string=? "can enter" (first mode-rules))]
-         [can-leave (string=? "can leave" (second mode-rules))])
+  (let* ((mode-pair (split-and-trim line ":"))
+         (name (first mode-pair))
+         (mode-rules (split-and-trim (second mode-pair) ","))
+         (can-enter (string=? "can enter" (first mode-rules)))
+         (can-leave (string=? "can leave" (second mode-rules))))
 
     (add-mode name can-enter can-leave model)))
 
 (define (read-curfew line)
-  (let* ([curfew-pair  (split-and-trim line ":")]
-         [curfew-key (first curfew-pair)]
-         [curfew-value (second curfew-pair)])
+  (let* ((curfew-pair  (split-and-trim line ":"))
+         (curfew-key (first curfew-pair))
+         (curfew-value (second curfew-pair)))
       
     (cond
-      ([string=? curfew-key "starts"]
+      ((string=? curfew-key "starts")
        (list 'starts (string->number curfew-value)))
 
-      ([string=? curfew-key "ends"]
+      ((string=? curfew-key "ends")
        (list 'ends (string->number curfew-value)))
 
-      ([string=? curfew-key "rules"]
-       (let* ([rules-pair (split-and-trim curfew-value ",")]
-              [can-enter (string=? "can enter" (first rules-pair))]
-              [can-leave (string=? "can leave" (second rules-pair))])
+      ((string=? curfew-key "rules")
+       (let* ((rules-pair (split-and-trim curfew-value ","))
+              (can-enter (string=? "can enter" (first rules-pair)))
+              (can-leave (string=? "can leave" (second rules-pair))))
          
          (list 'rules can-enter can-leave))))))
             
 
 ; We are in the 'rules' section. Here we parse the rule line and populate a rule structure.
 (define (read-rules line)
-  (let* ([rule-pair (split-and-trim line ":")]
-         [name (cond
+  (let* ((rule-pair (split-and-trim line ":"))
+         (name (cond
                  ((string=? (first rule-pair) "enter") 'can-enter)
-                 ((string=? (first rule-pair) "leave") 'can-leave))]
-         [rule-condition-text (second rule-pair)]
-         [rule-condition (if (string=? rule-condition-text "always") 'always 'when-registered)])
+                 ((string=? (first rule-pair) "leave") 'can-leave)))
+         (rule-condition-text (second rule-pair))
+         (rule-condition (if (string=? rule-condition-text "always") 'always 'when-registered)))
     
     (list name rule-condition)))
 
