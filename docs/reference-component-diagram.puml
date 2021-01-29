@@ -5,17 +5,14 @@ title Modules
 [Main] as main
 [Parser] as parser
 [Model] as model
-[Chips\nRegistry] as registry
+[Registry] as registry
 [<<rules.mcpd>>] as rules
 [User\nInterface] as ui
-[Interpreter] as interpreter
 
 main --> ui
 main --> parser
 ui --> model
 ui --> registry
-ui --> interpreter
-interpreter -> model
 parser --> model
 parser --> rules
 
