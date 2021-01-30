@@ -29,6 +29,8 @@
         (rules-section "")
         (model '()))
 
+    ; Utility function that sets the inside-*-section variables to the desired values.
+    ; boolean, boolean, boolean -> void
     (define (set-inside-section! modes curfew rules)
       (set! inside-modes-section modes)
       (set! inside-curfew-section curfew)
@@ -63,6 +65,8 @@
           (string-split curfew-section "\n")
           (string-split rules-section "\n"))))
 
+; Utility function that applies in succession changes to the model by parsing all the sections.
+; list(string) -> model
 (define (parse-sections sections)
   (let*
       ((with-modes (parse-modes-section (first sections) (empty-model)))
@@ -70,12 +74,16 @@
        (with-rules (parse-rules-section (third sections) with-curfew)))
     with-rules))
 
+; Utility function that parses the modes section and applies changes to the model.
+; string, model
 (define (parse-modes-section modes-section model)
   (define temporary-model model)
   (for ((line modes-section))
     (set! temporary-model (read-mode line temporary-model)))
   temporary-model)
 
+; Utility function that parses the curfew section and applies changes to the model.
+; string, model -> model
 (define (parse-curfew-section curfew-section model)
   (define starts #f)
   (define ends #f)
@@ -97,6 +105,8 @@
 
   (add-curfew-section starts ends can-enter can-leave model))
 
+; Utility function that parses the rules section and applies changes to the model.
+; string, model -> model
 (define (parse-rules-section rules-section model)
   (define can-enter #f)
   (define can-leave #f)
@@ -113,7 +123,8 @@
   
   (add-rules-section can-enter can-leave model))
 
-
+; Utility function that parses a mode line and gives back the retrieved information in a list.
+; string, model -> model
 (define (read-mode line model)
   (let* ((mode-pair (split-and-trim line ":"))
          (name (first mode-pair))
@@ -123,6 +134,8 @@
 
     (add-mode name can-enter can-leave model)))
 
+; Utility function that parses a curfew line and gives back the retrieved information in a list.
+; string -> list
 (define (read-curfew line)
   (let* ((curfew-pair  (split-and-trim line ":"))
          (curfew-key (first curfew-pair))
@@ -142,8 +155,8 @@
          
          (list 'rules can-enter can-leave))))))
             
-
-; We are in the 'rules' section. Here we parse the rule line and populate a rule structure.
+; Utility function that parses a rules line and gives back the retrieved information in a list.
+; string -> list
 (define (read-rules line)
   (let* ((rule-pair (split-and-trim line ":"))
          (name (cond
@@ -155,8 +168,13 @@
     (list name rule-condition)))
 
 ; Utility function to split a string while also trimming its parts
+; string, string -> list(string)
 (define (split-and-trim line separator)
   (map string-trim (string-split line separator)))
+
+
+; ------------------------
+; unit tests
 
 (check-equal?
  (split-file-in-sections "rules.mcpd")

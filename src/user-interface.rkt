@@ -1,13 +1,21 @@
 #lang racket
 
-;;; TODO add documentation
-(provide new-mcpd-session)
+;;; Holds a mcpd session and provides an interactive prompt.
+
+(provide
+
+ ;; [Function] Starts a new interactive prompt with a Microchip Pet Door session.
+ ;; model -> function
+ new-mcpd-session)
 
 (require "model.rkt")
 (require "parser.rkt")
 (require "registry.rkt")
 (require racket/date)
 (require racket/pretty)
+
+; ------------------------
+; implementation
 
 (define (new-mcpd-session model)
   (define registry (new-registry))
@@ -21,9 +29,13 @@
   (define can-cat-enter-during-curfew (can-enter-during-curfew? model))
   (define can-cat-leave-during-curfew (can-leave-during-curfew? model))
 
+  ; Allows to activate/deactivate the special curfew mode.
+  ; void -> void
   (define (toggle-curfew!)
     (set! curfew-activated (not curfew-activated)))
 
+  ; Creates the interactive prompt.
+  ; void -> function
   (define (prompt)
     (begin
       (displayln "Microchip Pet Door v0.0.1-pre-alpha by Tristano Suriani")
@@ -38,7 +50,7 @@
                            (string-split (string-trim text-input) " ")))
                 (command (if (>= (length input) 1)
                              (string->symbol (first input))
-                             "nothing"))
+                             'nothing))
                 (cat-id (if (>= (length input) 2)
                             (second input)
                             '())))
@@ -71,6 +83,9 @@
 
                ((eq? 'unregister command)
                 (modify-registry! chip-unregister cat-id))
+
+               ((eq? 'nothing command)
+                (display ""))
 
                ((eq? 'registered command)
                 (cond
@@ -107,12 +122,16 @@
                (else
                 (displayln (string-append "Unknown command " (symbol->string command) "."))))))))))
 
+  ; Allows to select the next mode.
+  ; void -> void
   (define (switch-mode!)
     (set! modes-names (append (cdr modes-names) (list (car modes-names))))
     (set! active-mode (first modes-names))
     (set! can-registered-cat-enter (can-enter-registered? active-mode model))
     (set! can-registered-cat-leave (can-leave-registered? active-mode model)))
-  
+
+  ; Allows to modify the registry if a cat-id has been provided, returns an error message otherwise.
+  ; function, integer -> void
   (define (modify-registry! fn cat-id)
     (cond
       ((null? cat-id)
@@ -121,7 +140,9 @@
        (begin
          (set! registry (fn cat-id registry))
          (print-done)))))      
-  
+
+  ; Utility function to create an infinite loop that can only be broken by the command quit.
+  ; function -> void
   (define (infinite-loop fn)
     (let
         ((result (fn)))
@@ -129,6 +150,8 @@
         ((eq? result 'quit) "Bye.")
         (else (infinite-loop fn)))))
 
+  ; Prints the help message with a list of the allowed operations.
+  ; void -> void
   (define (print-help)
     (let
         ((help '(("curfew" "Checks if the curfew is active" "curfew")
@@ -151,6 +174,8 @@
                (displayln (string-append "- " command ": " description ".\n\tUsage:> " usage "\n"))))
            help)))
 
+  ; Utility debugging function to print and inspect that state of a mcpd session.
+  ; void -> void
   (define (print-state)
     (map (λ (var) (pretty-print var))
          (list "model"
@@ -176,8 +201,10 @@
                "can-cat-leave-during-curfew"
                can-cat-leave-during-curfew)))
   
-  prompt)
+  (prompt))
 
+; Utility function to know if the curfew mode is active.
+; model, boolean -> boolean
 (define (curfew? model curfew-activated)
   (let*
       ([starts (model-curfew-starts model)]
@@ -190,19 +217,26 @@
      (>= hour starts)
      (<= hour ends))))
 
-
+; Utility function to translate a boolean response to a user friendly message when checking that an operation is allowed.
+; boolean -> string
 (define (boolean-response->text-response boolean-response)
   (if [eq? #t boolean-response]
       "Ok."
       "Permisison denied."))
 
+; Utility function to translate a boolean response to a user friendly message when checking the result of a query.
+; boolean -> string
 (define (boolean-response->yes-no boolean-response)
   (if (eq? boolean-response #t)
       "Yes."
       "No."))
-  
+
+; Utility function to print "Done."
+; void -> void
 (define (print-done)
   (displayln "Done."))
 
+; Utility function to inform the user that the cat id is missing.
+; void -> void
 (define (print-missing-cat-id)
   (displayln (string-append "Error: missing cat id")))

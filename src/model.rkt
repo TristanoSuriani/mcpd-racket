@@ -7,47 +7,48 @@
  empty-model
 
  ;; Adds a mode to a model
-add-mode
+ add-mode
 
-;; Retrieves a list of the modes' names
-get-modes-names
+ ;; Retrieves a list of the modes' names
+ get-modes-names
 
-;; Retrieves a mode from its name
-get-mode-by-name
+ ;; Retrieves a mode from its name
+ get-mode-by-name
 
-;; Adds the curfew section to a model
-add-curfew-section
+ ;; Adds the curfew section to a model
+ add-curfew-section
 
-;; Adds the rules section to a model
-add-rules-section
+ ;; Adds the rules section to a model
+ add-rules-section
 
-;; It retrieves the starting time of the curfew from a model
-model-curfew-starts
+ ;; It retrieves the starting time of the curfew from a model
+ model-curfew-starts
 
-;; It retrieves the ending time of the curfew from a model
-model-curfew-ends
+ ;; It retrieves the ending time of the curfew from a model
+ model-curfew-ends
 
-;; Answers if an unregistered cat can enter
-can-enter-unregistered?
+ ;; Answers if an unregistered cat can enter
+ can-enter-unregistered?
 
-;; Answers if an unregistered cat can leave
-can-leave-unregistered?
+ ;; Answers if an unregistered cat can leave
+ can-leave-unregistered?
 
-;; Answers if a registered cat can enter
-can-enter-registered?
+ ;; Answers if a registered cat can enter
+ can-enter-registered?
 
-;; Answers if a registered cat can leave
-can-leave-registered?
+ ;; Answers if a registered cat can leave
+ can-leave-registered?
 
-;; Answers if a cat can enter during the curfew
-can-enter-during-curfew?
+ ;; Answers if a cat can enter during the curfew
+ can-enter-during-curfew?
 
-;; Answers if a cat can leave during the curfew
-can-leave-during-curfew?
-
-)
+ ;; Answers if a cat can leave during the curfew
+ can-leave-during-curfew?)
  
 (require rackunit)
+
+; ------------------------
+; implementation
 
 (define (empty-model)
   '((modes)
@@ -111,16 +112,13 @@ can-leave-during-curfew?
 (define (can-leave-during-curfew? model)
   (can-do? '(curfew can-leave) model))
 
-;; __________________________
-;;
-;; Utility functions
-;; __________________________
-
+; Check if a certain operation is allowed given a list of tags and the model.
 (define (can-do? tags model)
-   (let
+  (let
       ((selected-mode (get-tagged-list-with-tags tags model)))
     (second selected-mode)))
 
+; Utility function that retrieves a list at any depth inside a list of s-expression starting from a given element (tag).
 (define (get-tagged-list tag lst)
   (cond
     ((null? lst) '())
@@ -128,19 +126,21 @@ can-leave-during-curfew?
      (cond
        ((eq? (car lst) tag) lst)
        (else (get-tagged-list tag (cdr lst)))))
-     (else
-      (let
-          ((car-branch (get-tagged-list tag (car lst))))
-      (cond
-        ((null? car-branch) (get-tagged-list tag (cdr lst)))
-        (else car-branch))))))
+    (else
+     (let
+         ((car-branch (get-tagged-list tag (car lst))))
+       (cond
+         ((null? car-branch) (get-tagged-list tag (cdr lst)))
+         (else car-branch))))))
 
+; Utility function that retrieves a list at any depth inside a list of s-expressions recursively using a succession of tags.
 (define (get-tagged-list-with-tags tags lst)
   (cond
     ((null? lst) '())
     ((null? tags) lst)
     (else (get-tagged-list-with-tags (cdr tags) (get-tagged-list (car tags) lst)))))
 
+; Utility function to insert an element after a given one at any depth in a list of s-expressions.
 (define (insertR* old new lst)
   (cond
     ((null? lst) '())
@@ -154,6 +154,7 @@ can-leave-during-curfew?
      (cons (insertR* old new (car lst))
            (insertR* old new (cdr lst))))))
 
+; Utility function to replace an element with another one at any depth in a list of s-expressions.
 (define (replace* old new lst)
   (cond
     ((null? lst) '())
@@ -167,16 +168,15 @@ can-leave-during-curfew?
      (cons (replace* old new (car lst))
            (replace* old new (cdr lst))))))
 
+; Utility function to check if an element is an atom.
 (define (atom? element)
   (and
    (not (null? element))
    (not (pair? element))))
 
 
-;; __________________________
-;;
-;; Unit tests
-;; __________________________
+; ------------------------
+; unit tests
 
 (check-equal?
  (add-mode 'test #t #f (empty-model))
@@ -238,14 +238,14 @@ can-leave-during-curfew?
 
 (check-equal?
  (get-modes-names (add-curfew-section 18 22 #t #f
-                                        (add-mode 'test #t #f
-                                                  (add-mode 'demo #f #t (empty-model)))))
+                                      (add-mode 'test #t #f
+                                                (add-mode 'demo #f #t (empty-model)))))
  '(test demo))
 
 (check-equal?
  (get-mode-by-name 'demo(add-curfew-section 18 22 #t #f
-                                        (add-mode 'test #t #f
-                                                  (add-mode 'demo #f #t (empty-model)))))
+                                            (add-mode 'test #t #f
+                                                      (add-mode 'demo #f #t (empty-model)))))
  '(demo (can-enter #f) (can-leave #t)))
 
 (check-equal?

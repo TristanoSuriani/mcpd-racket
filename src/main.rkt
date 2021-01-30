@@ -18,4 +18,4 @@
 
 |#
 
-((new-mcpd-session (parse-mcpd-file "rules.mcpd")))
+(new-mcpd-session (parse-mcpd-file "rules.mcpd"))
