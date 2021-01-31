@@ -61,22 +61,23 @@
 
                ((eq? 'enter command)
                 (cond
-                  ((curfew? model curfew-activated)
-                   (displayln (boolean-response->text-response can-cat-enter-during-curfew)))
                   ((and
                     (not (null? cat-id))
                     (chip-registered? cat-id registry))
-                   (displayln (boolean-response->text-response can-registered-cat-enter)))
+                   
+                   (if (curfew? model curfew-activated)
+                       (displayln (boolean-response->text-response can-cat-enter-during-curfew))
+                       (displayln (boolean-response->text-response can-registered-cat-enter))))
                   (else (displayln (boolean-response->text-response can-unregistered-cat-enter)))))
 
                ((eq? 'leave command)
                 (cond
-                  ((curfew? model curfew-activated)
-                   (displayln (boolean-response->text-response can-cat-leave-during-curfew)))
                   ((and
                     (not (null? cat-id))
                     (chip-registered? cat-id registry))
-                   (displayln (boolean-response->text-response can-registered-cat-leave)))
+                   (if (curfew? model curfew-activated)
+                       (displayln (boolean-response->text-response can-cat-leave-during-curfew))
+                       (displayln (boolean-response->text-response can-registered-cat-leave))))
                   (else (displayln (boolean-response->text-response can-unregistered-cat-leave)))))
 
                ((eq? 'register command)

@@ -1,0 +1,26 @@
+@startuml
+
+title Enter/Leave Rules
+
+start
+
+:Tzatziki wants to enter/leave;
+
+if (Is his chip registered?) then (yes)
+  if (Is the curfew mode active?) then (yes)
+    :Check the curfew rules;
+    else (no)
+      :Check the rules for the active mode;
+    endif
+else (no)
+  :Check the miscellanous rules (rules section);
+endif
+if (Allowed?) then (yes)
+      :Meow!;
+      stop
+    else (no)
+      :Dikke Pech;
+      stop
+    endif
+
+@enduml
