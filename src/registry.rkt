@@ -24,16 +24,20 @@
 ; ------------------------
 ; implementation
 
-(define (new-registry)
+(define/contract (new-registry)
+  (-> null?)
   '())
 
-(define (chip-register cat-id registry)
+(define/contract (chip-register cat-id registry)
+  ((and/c (not/c null?) (not/c pair?)) (or/c null? pair?) . -> . pair?)
   (append registry (list cat-id)))
 
-(define (chip-unregister cat-id registry)
+(define/contract (chip-unregister cat-id registry)
+  ((and/c (not/c null?) (not/c pair?)) (or/c null? pair?) . -> . (or/c null? pair?))
   (remove cat-id registry))
 
-(define (chip-registered? cat-id registry)
+(define/contract (chip-registered? cat-id registry)
+  ((and/c (not/c null?) (not/c pair?)) (or/c null? pair?) . -> . boolean?) 
   (member? cat-id registry))
 
 ; Utility function to know if an element belongs to a list.

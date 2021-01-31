@@ -17,7 +17,8 @@
 ; ------------------------
 ; implementation
 
-(define (new-mcpd-session model)
+(define/contract (new-mcpd-session model)
+  (model? . -> . procedure?)
   (define registry (new-registry))
   (define modes-names (get-modes-names model))
   (define active-mode (first modes-names))

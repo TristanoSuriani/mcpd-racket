@@ -3,7 +3,10 @@
 ;;; Defines the model for the MCPD domain specific language.
 
 (provide
- ;; Returns an empty model
+ ;; Checks if a list represents a model
+ model?
+
+  ;; Returns an empty model
  empty-model
 
  ;; Adds a mode to a model
@@ -50,15 +53,23 @@
 ; ------------------------
 ; implementation
 
-(define (empty-model)
+(define (model? lst)
+  (and (not (null? (get-tagged-list 'modes lst)))
+       (not (null? (get-tagged-list 'curfew lst)))
+       (not (null? (get-tagged-list 'rules lst)))))
+
+(define/contract (empty-model)
+  (-> model?)
   '((modes)
     (curfew)
     (rules)))
 
-(define (add-mode name can-enter can-leave model)
+(define/contract (add-mode name can-enter can-leave model)
+  (symbol? boolean? boolean? model? . -> . model?)
   (insertR* 'modes `(,name (can-enter ,can-enter) (can-leave ,can-leave)) model))
 
-(define (add-curfew-section starts ends can-enter can-leave model)
+(define/contract (add-curfew-section starts ends can-enter can-leave model)
+ ((and/c number? (>=/c 0) (<=/c 23)) (and/c number? (>=/c 0) (<=/c 23)) boolean? boolean? model? . -> . model?)
   (let
       ((curfew-body `(curfew
                       (starts ,starts)
@@ -68,7 +79,8 @@
 
     (replace* 'curfew curfew-body model)))
 
-(define (add-rules-section can-enter can-leave model)
+(define/contract (add-rules-section can-enter can-leave model)
+  ((one-of/c 'always 'when-registered) (one-of/c 'always 'when-registered) model? . -> . model?)
   (let
       ((rules-body `(rules
                      (can-enter ,can-enter)
@@ -77,7 +89,8 @@
     (replace* 'rules rules-body model)))
 
 
-(define (get-modes-names model)
+(define/contract (get-modes-names model)
+  (model? . -> . pair?)
   (let
       ((modes (get-tagged-list 'modes model)))
     
@@ -85,31 +98,40 @@
            (first mode))
          (rest modes))))
 
-(define (get-mode-by-name name model)
+(define/contract (get-mode-by-name name model)
+  (symbol? model? . -> . pair?)
   (get-tagged-list-with-tags (list 'modes name) model))
   
-(define (model-curfew-starts model)
+(define/contract (model-curfew-starts model)
+  (model? . -> . (and/c number? (>=/c 0) (<=/c 23)))
   (second (get-tagged-list-with-tags '(curfew starts) model)))
 
-(define (model-curfew-ends model)
-  (second (get-tagged-list-with-tags '(curfew starts) model)))
+(define/contract (model-curfew-ends model)
+  (model? . -> . (and/c number? (>=/c 0) (<=/c 23)))
+  (second (get-tagged-list-with-tags '(curfew ends) model)))
 
-(define (can-enter-unregistered? model)
+(define/contract (can-enter-unregistered? model)
+  (model? . -> . boolean?)
   (eq? (can-do? '(rules can-enter) model) 'always))
 
-(define (can-leave-unregistered? model)
+(define/contract (can-leave-unregistered? model)
+  (model? . -> . boolean?)
   (eq? (can-do? '(rules can-leave) model) 'always))
 
-(define (can-enter-registered? mode model)
+(define/contract (can-enter-registered? mode model)
+  (symbol? model? . -> . boolean?)
   (can-do? `(modes ,mode can-enter) model))
 
-(define (can-leave-registered? mode model)
+(define/contract (can-leave-registered? mode model)
+  (symbol? model? . -> . boolean?)
   (can-do? `(modes ,mode can-leave) model))
 
-(define (can-enter-during-curfew? model)
+(define/contract (can-enter-during-curfew? model)
+  (model? . -> . boolean?)
   (can-do? '(curfew can-enter) model))
 
-(define (can-leave-during-curfew? model)
+(define/contract (can-leave-during-curfew? model)
+  (model? . -> . boolean?)
   (can-do? '(curfew can-leave) model))
 
 ; Check if a certain operation is allowed given a list of tags and the model.
@@ -173,7 +195,6 @@
   (and
    (not (null? element))
    (not (pair? element))))
-
 
 ; ------------------------
 ; unit tests

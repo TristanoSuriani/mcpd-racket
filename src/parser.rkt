@@ -15,7 +15,8 @@
 (require "model.rkt")
 (require rackunit)
 
-(define (parse-mcpd-file filename)
+(define/contract (parse-mcpd-file filename)
+  (string? . -> . model?)
   (parse-sections (split-file-in-sections filename)))
 
 (define (split-file-in-sections filename)
@@ -127,7 +128,7 @@
 ; string, model -> model
 (define (read-mode line model)
   (let* ((mode-pair (split-and-trim line ":"))
-         (name (first mode-pair))
+         (name (string->symbol (first mode-pair)))
          (mode-rules (split-and-trim (second mode-pair) ","))
          (can-enter (string=? "can enter" (first mode-rules)))
          (can-leave (string=? "can leave" (second mode-rules))))
@@ -196,13 +197,13 @@
   (empty-model))
 
  '((modes
-    ("default" (can-enter #t) (can-leave #f))
-    ("fully closed" (can-enter #f) (can-leave #f))
-    ("only leave" (can-enter #f) (can-leave #t))
-    ("only enter" (can-enter #t) (can-leave #f))
-    ("fully open" (can-enter #t) (can-leave #t)))
-   (curfew)
-   (rules)))
+     (default (can-enter #t) (can-leave #f))
+     (|fully closed| (can-enter #f) (can-leave #f))
+     (|only leave| (can-enter #f) (can-leave #t))
+     (|only enter| (can-enter #t) (can-leave #f))
+     (|fully open| (can-enter #t) (can-leave #t)))
+    (curfew)
+    (rules)))
 
 (check-equal?
  (parse-curfew-section
@@ -232,11 +233,11 @@
  (parse-mcpd-file "rules.mcpd")
 
  '((modes
-    ("default" (can-enter #t) (can-leave #f))
-    ("fully closed" (can-enter #f) (can-leave #f))
-    ("only leave" (can-enter #f) (can-leave #t))
-    ("only enter" (can-enter #t) (can-leave #f))
-    ("fully open" (can-enter #t) (can-leave #t)))
+    (default (can-enter #t) (can-leave #f))
+    (|fully closed| (can-enter #f) (can-leave #f))
+    (|only leave| (can-enter #f) (can-leave #t))
+    (|only enter| (can-enter #t) (can-leave #f))
+    (|fully open| (can-enter #t) (can-leave #t)))
    
    ((curfew
      (starts 22)
