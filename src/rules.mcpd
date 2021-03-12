@@ -16,4 +16,3 @@ rules: can enter, cannot leave
 enter: when registered
 leave: always
 
-  
